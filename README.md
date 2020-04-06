@@ -4,7 +4,7 @@ This is a Markdown Explorer to see all your markdowns in your workspace in one p
 
 ## Features
 
-Coming later
+Work in progress.. stay tuned :)
 
 ## Requirements
 

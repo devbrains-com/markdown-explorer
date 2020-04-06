@@ -72,13 +72,10 @@ export class MarkdownProvider implements vscode.TreeDataProvider<MarkdownFile> {
   }
 
   getTreeItem(element: MarkdownFile): vscode.TreeItem {
-    console.log("getElement", element.label);
     return element;
   }
 
   async getChildren(element?: MarkdownFile): Promise<MarkdownFile[]> {
-    console.log("getChildren", element);
-
     if (!this.workspaceRoot) {
       vscode.window.showInformationMessage("No markdowns in empty workspace");
       return Promise.resolve([]);
@@ -205,8 +202,6 @@ class MarkdownFile extends vscode.TreeItem {
       this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
       this.contextValue = (this.contextValue || "") + "folder";
     }
-
-    console.log(this.label, this.contextValue);
   }
 
   isFile: boolean;
@@ -215,13 +210,4 @@ class MarkdownFile extends vscode.TreeItem {
   get tooltip(): string {
     return `${this.label} - ${this.filePath || this.directoryPath}`;
   }
-
-  // get description(): string {
-  //   return this.filePath;
-  // }
-
-  // iconPath = {
-  //   light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-  //   dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-  // };
 }

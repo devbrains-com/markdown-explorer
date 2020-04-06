@@ -5,6 +5,7 @@
   "publisher": "devbrains-com",
   "version": "0.0.1",
   "license": "GPL-3.0-or-later",
+  "repository": "github:devbrains-com/markdown-explorer",
   "engines": {
     "vscode": "^1.43.0"
   },
