@@ -61,6 +61,7 @@ export function readdir(path: string): Promise<string[]> {
 
 export class MarkdownProvider implements vscode.TreeDataProvider<MarkdownFile> {
   constructor(private workspaceRoot?: string) {}
+  private excludedFolders: Array<string | RegExp> = [];
   private _onDidChangeTreeData: vscode.EventEmitter<
     MarkdownFile | undefined
   > = new vscode.EventEmitter<MarkdownFile | undefined>();
@@ -82,12 +83,37 @@ export class MarkdownProvider implements vscode.TreeDataProvider<MarkdownFile> {
     }
 
     if (!element) {
+      this.readConfig();
       return Promise.resolve(this.getMarkdownsInPath(this.workspaceRoot));
     } else if (element.directoryPath) {
       return Promise.resolve(this.getMarkdownsInPath(element.directoryPath));
     }
 
     return Promise.resolve([]);
+  }
+
+  private readConfig() {
+    this.excludedFolders =
+      vscode.workspace
+        .getConfiguration()
+        .get<string>("markdown-explorer.excludedFolders")
+        ?.split(";")
+        .map((f) => (f.includes("*") ? new RegExp(f) : f)) || [];
+  }
+
+  private isExcludedFolder(fullPath: string): boolean {
+    const name = path.basename(fullPath);
+
+    // Exclude folders beginning with a dot (.)
+    if (name.indexOf(".") === 0) {
+      return true;
+    }
+
+    return this.excludedFolders.some((exclude) =>
+      typeof exclude === "string"
+        ? exclude === name
+        : (exclude as RegExp).test(fullPath)
+    );
   }
 
   private async hasChildMarkdowns(currentPath: string): Promise<boolean> {
@@ -99,10 +125,16 @@ export class MarkdownProvider implements vscode.TreeDataProvider<MarkdownFile> {
 
     for (let i = 0; i < fileNames.length; i++) {
       const fullPath = path.join(currentPath, fileNames[i]);
-      if (
-        fs.lstatSync(fullPath).isDirectory() &&
-        (await this.hasChildMarkdowns(fullPath))
-      ) {
+      const isDirectory = fs.lstatSync(fullPath).isDirectory();
+
+      if (!isDirectory) {
+        continue;
+      }
+      if (this.isExcludedFolder(fullPath)) {
+        continue;
+      }
+
+      if (await this.hasChildMarkdowns(fullPath)) {
         return true;
       }
     }
@@ -139,6 +171,10 @@ export class MarkdownProvider implements vscode.TreeDataProvider<MarkdownFile> {
 
       const isDirectory = fs.lstatSync(fullPath).isDirectory();
       if (isDirectory) {
+        if (this.isExcludedFolder(fullPath)) {
+          continue;
+        }
+
         if (!(await this.hasChildMarkdowns(fullPath))) {
           continue;
         }
